@@ -175,7 +175,7 @@ select.fi{cursor:pointer;}
 </style>
 </head>
 <body>
-
+ 
 <!-- DASHBOARD -->
 <div class="scr on" id="s-dash">
   <div class="hdr">
@@ -210,7 +210,7 @@ select.fi{cursor:pointer;}
     <div style="height:6px;"></div>
   </div>
 </div>
-
+ 
 <!-- TRANSACTIONS -->
 <div class="scr" id="s-txns">
   <div class="hdr"><div class="hr"><div><div class="ht">Transactions</div><div class="hs">Complete history</div></div></div></div>
@@ -226,7 +226,7 @@ select.fi{cursor:pointer;}
   </div>
   <div class="sa" style="padding:0 16px;"><div id="tlist"></div></div>
 </div>
-
+ 
 <!-- BUDGET -->
 <div class="scr" id="s-budget">
   <div class="hdr">
@@ -251,7 +251,7 @@ select.fi{cursor:pointer;}
     <div id="blist"></div>
   </div>
 </div>
-
+ 
 <!-- REPORTS -->
 <div class="scr" id="s-reports">
   <div class="hdr">
@@ -288,7 +288,7 @@ select.fi{cursor:pointer;}
     <div style="height:4px;"></div>
   </div>
 </div>
-
+ 
 <!-- SINKING FUNDS -->
 <div class="scr" id="s-sink">
   <div class="hdr">
@@ -309,7 +309,7 @@ select.fi{cursor:pointer;}
     <div id="sf-list"></div>
   </div>
 </div>
-
+ 
 <!-- NAV -->
 <nav class="nav">
   <button class="nb on" onclick="go('dash',this)">
@@ -333,7 +333,7 @@ select.fi{cursor:pointer;}
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="9"/><polyline points="12 8 12 12 14 14"/></svg>Reports
   </button>
 </nav>
-
+ 
 <!-- ADD MODAL -->
 <div class="ov" id="am" onclick="bgc(event,'am')">
   <div class="modal">
@@ -355,7 +355,7 @@ select.fi{cursor:pointer;}
     <button class="btn" onclick="saveTxn()">Save Transaction</button>
   </div>
 </div>
-
+ 
 <!-- BUDGET MODAL -->
 <div class="ov" id="bm" onclick="bgc(event,'bm')">
   <div class="modal">
@@ -367,7 +367,7 @@ select.fi{cursor:pointer;}
     <button class="btn ghost" onclick="document.getElementById('bm').classList.remove('open')">Cancel</button>
   </div>
 </div>
-
+ 
 <!-- SINKING FUND ENTRY MODAL -->
 <div class="ov" id="sf-modal" onclick="bgc(event,'sf-modal')">
   <div class="modal">
@@ -381,7 +381,7 @@ select.fi{cursor:pointer;}
     <button class="btn ghost" onclick="document.getElementById('sf-modal').classList.remove('open')">Cancel</button>
   </div>
 </div>
-
+ 
 <!-- SINKING FUND SETUP MODAL -->
 <div class="ov" id="sf-setup" onclick="bgc(event,'sf-setup')">
   <div class="modal">
@@ -394,9 +394,9 @@ select.fi{cursor:pointer;}
     <button class="btn ghost" onclick="document.getElementById('sf-setup').classList.remove('open')">Cancel</button>
   </div>
 </div>
-
+ 
 <div id="toast"></div>
-
+ 
 <script>
 const CATS={
   income:['💵 Paycheck','💳 Freelance','🏦 Bank Transfer','📈 Investment','🎁 Gift / Bonus','🔁 Reimbursement Received','⚡ Other Income'],
@@ -684,7 +684,7 @@ function rSink(){
   document.getElementById('sf-mthis').textContent=(thisMonthNet<0?'-':'')+f$(thisMonthNet);
   document.getElementById('sf-mthis').style.color=thisMonthNet<0?'var(--red)':'var(--grn)';
   document.getElementById('sf-count').textContent=SF_FUNDS.length;
-
+ 
   const el=document.getElementById('sf-list');
   el.innerHTML=SF_FUNDS.map(fd=>{
     const cfg=S.sinkFunds.find(s=>s.id===fd.id)||{target:0,goal:0};
@@ -693,7 +693,7 @@ function rSink(){
     const mthisNet=thisMonth.filter(c=>c.fundId===fd.id).reduce((a,c)=>a+(c.kind==='withdraw'?-c.amount:c.amount),0);
     const pct=cfg.goal>0?Math.min((Math.max(0,balance)/cfg.goal)*100,100):cfg.target>0?Math.min((Math.max(0,balance)/cfg.target)*100,100):0;
     const barCol=pct>=100?'var(--grn)':pct>=50?'var(--pur)':'var(--pur)';
-
+ 
     const histHTML=allEntries.length>0
       ? `<div style="margin-top:11px;padding-left:6px;border-top:1px solid var(--bor);padding-top:9px;">
           <div style="font-size:10px;font-weight:700;letter-spacing:.8px;color:var(--t3);text-transform:uppercase;margin-bottom:7px;">Transaction History</div>
@@ -714,7 +714,7 @@ function rSink(){
             </div>`).join('')}
         </div>`
       : `<div style="font-size:12px;color:var(--t3);padding:10px 0 4px 6px;">No transactions yet</div>`;
-
+ 
     return`<div class="sf-card fu">
       <div class="sf-top">
         <div>
@@ -737,7 +737,7 @@ function rSink(){
     </div>`;
   }).join('');
 }
-
+ 
 function openSFEntry(fundId, kind){
   S.sfActiveId=fundId;
   S.sfEditContribId=null;
@@ -752,7 +752,7 @@ function openSFEntry(fundId, kind){
   document.getElementById('sf-save-btn').style.background=isW?'linear-gradient(135deg,var(--red),#cc4444)':'linear-gradient(135deg,var(--pur),#8855cc)';
   document.getElementById('sf-modal').classList.add('open');
 }
-
+ 
 function editSFC(contribId, fundId){
   const c=S.sinkContribs.find(x=>x.id===contribId);
   if(!c)return;
@@ -769,12 +769,12 @@ function editSFC(contribId, fundId){
   document.getElementById('sf-save-btn').style.background=isW?'linear-gradient(135deg,var(--red),#cc4444)':'linear-gradient(135deg,var(--pur),#8855cc)';
   document.getElementById('sf-modal').classList.add('open');
 }
-
+ 
 function delSFC(contribId){
   S.sinkContribs=S.sinkContribs.filter(c=>c.id!==contribId);
   persist();rSink();toast('Entry deleted');
 }
-
+ 
 function saveSFContrib(){
   const amt=parseFloat(document.getElementById('sf-amt').value);
   if(!amt||amt<=0){toast('⚠️ Enter a valid amount');return;}
@@ -801,9 +801,10 @@ function saveSFContrib(){
   document.getElementById('sf-modal').classList.remove('open');
   rSink();
 }
-
+ 
 function openSFAdd(){openSFEntry(SF_FUNDS[0].id,'deposit');}
-
+ 
+function openSFSetup(fundId){
   S.sfActiveId=fundId;
   const fd=SF_FUNDS.find(f=>f.id===fundId);
   const cfg=S.sinkFunds.find(s=>s.id===fundId)||{target:0,goal:0};
@@ -812,7 +813,7 @@ function openSFAdd(){openSFEntry(SF_FUNDS[0].id,'deposit');}
   document.getElementById('sf-goal').value=cfg.goal||'';
   document.getElementById('sf-setup').classList.add('open');
 }
-
+ 
 function saveSFSetup(){
   const fundId=document.getElementById('sf-fund-sel').value;
   const target=parseFloat(document.getElementById('sf-target').value)||0;
@@ -825,7 +826,7 @@ function saveSFSetup(){
   rSink();
   toast('✅ Fund settings saved!');
 }
-
+ 
 load();
 document.getElementById('idate').value=todayStr();
 stype('income',document.querySelector('.ttab.ai'));
