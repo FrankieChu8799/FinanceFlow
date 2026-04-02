@@ -368,15 +368,16 @@ select.fi{cursor:pointer;}
   </div>
 </div>
 
-<!-- SINKING FUND CONTRIBUTE MODAL -->
+<!-- SINKING FUND ENTRY MODAL -->
 <div class="ov" id="sf-modal" onclick="bgc(event,'sf-modal')">
   <div class="modal">
     <div class="mh"></div>
     <div class="mt" id="sf-modal-title">Add to Fund</div>
-    <div class="fg"><label class="fl">Amount to Add</label><input class="fi big" type="number" id="sf-amt" placeholder="$0.00" inputmode="decimal"></div>
+    <input type="hidden" id="sf-entry-kind" value="deposit">
+    <div class="fg"><label class="fl">Amount</label><input class="fi big" type="number" id="sf-amt" placeholder="$0.00" inputmode="decimal"></div>
     <div class="fg"><label class="fl">Date</label><input class="fi" type="date" id="sf-date"></div>
-    <div class="fg"><label class="fl">Notes (optional)</label><input class="fi" type="text" id="sf-notes" placeholder="e.g. From budget savings this month…"></div>
-    <button class="btn" style="background:linear-gradient(135deg,var(--pur),#8855cc)" onclick="saveSFContrib()">Add to Fund</button>
+    <div class="fg"><label class="fl">Notes (optional)</label><input class="fi" type="text" id="sf-notes" placeholder="e.g. From budget savings, Car repair…"></div>
+    <button class="btn" id="sf-save-btn" style="background:linear-gradient(135deg,var(--pur),#8855cc)" onclick="saveSFContrib()">Add to Fund</button>
     <button class="btn ghost" onclick="document.getElementById('sf-modal').classList.remove('open')">Cancel</button>
   </div>
 </div>
@@ -413,7 +414,7 @@ const SF_FUNDS=[
   {id:'personal',name:'Personal Fund (Slush)',icon:'💜'},
   {id:'emergency',name:'Emergency Fund',icon:'🆘'}
 ];
-let S={txns:[],budgets:[],sinkFunds:[],sinkContribs:[],type:'income',ctx:'personal',filter:'all',editId:null,sfActiveId:null,bm:new Date().getMonth(),by:new Date().getFullYear(),rm:new Date().getMonth(),ry:new Date().getFullYear()};
+let S={txns:[],budgets:[],sinkFunds:[],sinkContribs:[],type:'income',ctx:'personal',filter:'all',editId:null,sfActiveId:null,sfEditContribId:null,bm:new Date().getMonth(),by:new Date().getFullYear(),rm:new Date().getMonth(),ry:new Date().getFullYear()};
 function load(){
   try{
     const t=localStorage.getItem('ff4t'),b=localStorage.getItem('ff4b'),sf=localStorage.getItem('ff4sf'),sc=localStorage.getItem('ff4sc');
@@ -673,80 +674,136 @@ function xReim(){
 // ── SINKING FUNDS ──
 function rSink(){
   const now=new Date(),m=now.getMonth(),y=now.getFullYear();
-  const thisMonthContribs=S.sinkContribs.filter(c=>{const d=new Date(c.date+'T12:00:00');return d.getMonth()===m&&d.getFullYear()===y;});
-  const totalSaved=S.sinkContribs.reduce((a,c)=>a+c.amount,0);
-  const monthlyTarget=S.sinkFunds.reduce((a,f)=>a+f.target,0);
-  const thisMonthTotal=thisMonthContribs.reduce((a,c)=>a+c.amount,0);
-  document.getElementById('sf-total').textContent=f$(totalSaved);
+  const thisMonth=S.sinkContribs.filter(c=>{const d=new Date(c.date+'T12:00:00');return d.getMonth()===m&&d.getFullYear()===y;});
+  // Net balance = sum of all entries (deposits positive, withdrawals negative)
+  const totalSaved=S.sinkContribs.reduce((a,c)=>a+(c.kind==='withdraw'?-c.amount:c.amount),0);
+  const monthlyTarget=S.sinkFunds.reduce((a,f)=>a+(f.target||0),0);
+  const thisMonthNet=thisMonth.reduce((a,c)=>a+(c.kind==='withdraw'?-c.amount:c.amount),0);
+  document.getElementById('sf-total').textContent=f$(Math.max(0,totalSaved));
   document.getElementById('sf-mtarget').textContent=f$(monthlyTarget);
-  document.getElementById('sf-mthis').textContent=f$(thisMonthTotal);
+  document.getElementById('sf-mthis').textContent=(thisMonthNet<0?'-':'')+f$(thisMonthNet);
+  document.getElementById('sf-mthis').style.color=thisMonthNet<0?'var(--red)':'var(--grn)';
   document.getElementById('sf-count').textContent=SF_FUNDS.length;
 
   const el=document.getElementById('sf-list');
   el.innerHTML=SF_FUNDS.map(fd=>{
     const cfg=S.sinkFunds.find(s=>s.id===fd.id)||{target:0,goal:0};
-    const balance=S.sinkContribs.filter(c=>c.fundId===fd.id).reduce((a,c)=>a+c.amount,0);
-    const mthis=thisMonthContribs.filter(c=>c.fundId===fd.id).reduce((a,c)=>a+c.amount,0);
-    const pct=cfg.goal>0?Math.min((balance/cfg.goal)*100,100):cfg.target>0?Math.min((mthis/cfg.target)*100,100):0;
-    const barColor=pct>=100?'var(--grn)':pct>=50?'var(--pur)':'var(--pur)';
-    const recent=S.sinkContribs.filter(c=>c.fundId===fd.id).sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,3);
-    const recentHTML=recent.length>0?`<div style="margin-top:10px;padding-left:6px;border-top:1px solid var(--bor);padding-top:8px;">${recent.map(c=>`<div style="display:flex;justify-content:space-between;font-size:11px;color:var(--t2);padding:2px 0;"><span>${fD(c.date)}${c.notes?' · '+c.notes:''}</span><span style="color:var(--pur);font-weight:600;">+${f$(c.amount)}</span></div>`).join('')}</div>`:'';
+    const allEntries=S.sinkContribs.filter(c=>c.fundId===fd.id).sort((a,b)=>new Date(b.date)-new Date(a.date));
+    const balance=allEntries.reduce((a,c)=>a+(c.kind==='withdraw'?-c.amount:c.amount),0);
+    const mthisNet=thisMonth.filter(c=>c.fundId===fd.id).reduce((a,c)=>a+(c.kind==='withdraw'?-c.amount:c.amount),0);
+    const pct=cfg.goal>0?Math.min((Math.max(0,balance)/cfg.goal)*100,100):cfg.target>0?Math.min((Math.max(0,balance)/cfg.target)*100,100):0;
+    const barCol=pct>=100?'var(--grn)':pct>=50?'var(--pur)':'var(--pur)';
+
+    const histHTML=allEntries.length>0
+      ? `<div style="margin-top:11px;padding-left:6px;border-top:1px solid var(--bor);padding-top:9px;">
+          <div style="font-size:10px;font-weight:700;letter-spacing:.8px;color:var(--t3);text-transform:uppercase;margin-bottom:7px;">Transaction History</div>
+          ${allEntries.map(c=>`
+            <div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--bor);" id="sfc-${c.id}">
+              <div style="width:28px;height:28px;border-radius:8px;background:${c.kind==='withdraw'?'rgba(255,107,107,.1)':'rgba(181,122,255,.1)'};display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;">${c.kind==='withdraw'?'💸':'💜'}</div>
+              <div style="flex:1;min-width:0;">
+                <div style="font-size:12px;font-weight:600;color:${c.kind==='withdraw'?'var(--red)':'var(--txt)'};">${c.kind==='withdraw'?'Withdrawal':'Deposit'}</div>
+                <div style="font-size:11px;color:var(--t2);">${fD(c.date)}${c.notes?' · '+c.notes:''}</div>
+              </div>
+              <div style="text-align:right;flex-shrink:0;">
+                <div style="font-size:13px;font-weight:700;color:${c.kind==='withdraw'?'var(--red)':'var(--pur)'};">${c.kind==='withdraw'?'-':'+'}${f$(c.amount)}</div>
+                <div style="display:flex;gap:4px;margin-top:3px;justify-content:flex-end;">
+                  <button style="background:rgba(0,212,255,.1);color:var(--acc);border:none;width:24px;height:24px;border-radius:6px;font-size:11px;cursor:pointer;" onclick="editSFC('${c.id}','${fd.id}')">✏️</button>
+                  <button style="background:rgba(255,107,107,.1);color:var(--red);border:none;width:24px;height:24px;border-radius:6px;font-size:11px;cursor:pointer;" onclick="delSFC('${c.id}')">✕</button>
+                </div>
+              </div>
+            </div>`).join('')}
+        </div>`
+      : `<div style="font-size:12px;color:var(--t3);padding:10px 0 4px 6px;">No transactions yet</div>`;
+
     return`<div class="sf-card fu">
       <div class="sf-top">
         <div>
           <div class="sf-name">${fd.icon} ${fd.name}</div>
-          <div class="sf-bal">${f$(balance)}</div>
+          <div class="sf-bal" style="color:${balance<0?'var(--red)':'var(--pur)'}">${balance<0?'-':''}${f$(balance)}</div>
           <div class="sf-sub">${cfg.target>0?'Monthly target: '+f$(cfg.target):'No monthly target set'}${cfg.goal>0?' · Goal: '+f$(cfg.goal):''}</div>
         </div>
         <div style="text-align:right;">
-          ${mthis>0?`<div style="font-size:11px;color:var(--grn);font-weight:600;">+${f$(mthis)} this month</div>`:''}
+          ${mthisNet!==0?`<div style="font-size:11px;font-weight:600;color:${mthisNet<0?'var(--red)':'var(--grn)'};">${mthisNet>0?'+':''}${f$(mthisNet)} this month</div>`:''}
           ${cfg.goal>0?`<div style="font-size:11px;color:var(--t2);margin-top:2px;">${Math.round(pct)}% of goal</div>`:''}
         </div>
       </div>
-      ${cfg.goal>0||cfg.target>0?`<div class="sf-bar-bg"><div class="sf-bar-f" style="width:${pct}%;background:${barColor};"></div></div><div class="sf-meta"><span>${cfg.goal>0?f$(balance)+' / '+f$(cfg.goal):f$(mthis)+' / '+f$(cfg.target)+' this month'}</span><span>${cfg.goal>0&&balance<cfg.goal?f$(cfg.goal-balance)+' to go':''}</span></div>`:''}
-      ${recentHTML}
+      ${cfg.goal>0||cfg.target>0?`<div class="sf-bar-bg"><div class="sf-bar-f" style="width:${pct}%;background:${barCol};"></div></div><div class="sf-meta"><span>${cfg.goal>0?f$(Math.max(0,balance))+' / '+f$(cfg.goal):f$(Math.max(0,balance))+' saved'}</span><span style="color:var(--t2)">${cfg.goal>0&&balance<cfg.goal?f$(cfg.goal-balance)+' to go':pct>=100?'🎉 Goal reached!':''}</span></div>`:''}
+      ${histHTML}
       <div class="sf-actions">
-        <button class="sf-btn add" onclick="openSFContrib('${fd.id}')">+ Add Money</button>
-        <button class="sf-btn" onclick="openSFSetup('${fd.id}')" style="border-color:var(--bor2);color:var(--t2);">⚙️ Settings</button>
+        <button class="sf-btn add" onclick="openSFEntry('${fd.id}','deposit')">+ Deposit</button>
+        <button class="sf-btn" onclick="openSFEntry('${fd.id}','withdraw')" style="border-color:var(--red);color:var(--red);background:rgba(255,107,107,.06);">− Withdraw</button>
+        <button class="sf-btn" onclick="openSFSetup('${fd.id}')" style="border-color:var(--bor2);color:var(--t2);">⚙️</button>
       </div>
     </div>`;
   }).join('');
 }
 
-function openSFContrib(fundId){
+function openSFEntry(fundId, kind){
   S.sfActiveId=fundId;
+  S.sfEditContribId=null;
   const fd=SF_FUNDS.find(f=>f.id===fundId);
-  document.getElementById('sf-modal-title').textContent='Add to '+fd.name;
+  const isW=kind==='withdraw';
+  document.getElementById('sf-modal-title').textContent=(isW?'Withdraw from ':'Add to ')+fd.name;
+  document.getElementById('sf-entry-kind').value=kind;
   document.getElementById('sf-amt').value='';
   document.getElementById('sf-notes').value='';
   document.getElementById('sf-date').value=todayStr();
+  document.getElementById('sf-save-btn').textContent=isW?'Withdraw':'Add to Fund';
+  document.getElementById('sf-save-btn').style.background=isW?'linear-gradient(135deg,var(--red),#cc4444)':'linear-gradient(135deg,var(--pur),#8855cc)';
   document.getElementById('sf-modal').classList.add('open');
 }
 
-function openSFAdd(){
-  // Open contribute modal with fund selector
-  const fd=SF_FUNDS[0];
-  openSFContrib(fd.id);
+function editSFC(contribId, fundId){
+  const c=S.sinkContribs.find(x=>x.id===contribId);
+  if(!c)return;
+  S.sfActiveId=fundId;
+  S.sfEditContribId=contribId;
+  const fd=SF_FUNDS.find(f=>f.id===fundId);
+  const isW=c.kind==='withdraw';
+  document.getElementById('sf-modal-title').textContent='Edit Entry — '+fd.name;
+  document.getElementById('sf-entry-kind').value=c.kind;
+  document.getElementById('sf-amt').value=c.amount;
+  document.getElementById('sf-notes').value=c.notes||'';
+  document.getElementById('sf-date').value=c.date;
+  document.getElementById('sf-save-btn').textContent='Update Entry';
+  document.getElementById('sf-save-btn').style.background=isW?'linear-gradient(135deg,var(--red),#cc4444)':'linear-gradient(135deg,var(--pur),#8855cc)';
+  document.getElementById('sf-modal').classList.add('open');
+}
+
+function delSFC(contribId){
+  S.sinkContribs=S.sinkContribs.filter(c=>c.id!==contribId);
+  persist();rSink();toast('Entry deleted');
 }
 
 function saveSFContrib(){
   const amt=parseFloat(document.getElementById('sf-amt').value);
   if(!amt||amt<=0){toast('⚠️ Enter a valid amount');return;}
-  S.sinkContribs.push({
-    id:Date.now().toString(36)+Math.random().toString(36).slice(2,5),
+  const kind=document.getElementById('sf-entry-kind').value;
+  const entry={
+    id: S.sfEditContribId||Date.now().toString(36)+Math.random().toString(36).slice(2,5),
     fundId:S.sfActiveId,
+    kind,
     amount:amt,
     date:document.getElementById('sf-date').value,
     notes:document.getElementById('sf-notes').value.trim()
-  });
+  };
+  if(S.sfEditContribId){
+    const idx=S.sinkContribs.findIndex(c=>c.id===S.sfEditContribId);
+    if(idx>-1)S.sinkContribs[idx]=entry;
+    toast('✅ Entry updated!');
+  } else {
+    S.sinkContribs.push(entry);
+    const fd=SF_FUNDS.find(f=>f.id===S.sfActiveId);
+    toast('✅ '+(kind==='withdraw'?'Withdrawn from ':'Added to ')+fd.name+'!');
+  }
+  S.sfEditContribId=null;
   persist();
   document.getElementById('sf-modal').classList.remove('open');
   rSink();
-  const fd=SF_FUNDS.find(f=>f.id===S.sfActiveId);
-  toast('✅ Added to '+fd.name+'!');
 }
 
-function openSFSetup(fundId){
+function openSFAdd(){openSFEntry(SF_FUNDS[0].id,'deposit');}
+
   S.sfActiveId=fundId;
   const fd=SF_FUNDS.find(f=>f.id===fundId);
   const cfg=S.sinkFunds.find(s=>s.id===fundId)||{target:0,goal:0};
