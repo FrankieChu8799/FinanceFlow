@@ -133,6 +133,26 @@ select.fi{cursor:pointer;}
 .exo-i{font-size:26px;flex-shrink:0;}
 .exo-t{font-size:14px;font-weight:700;}
 .exo-d{font-size:12px;color:var(--t2);margin-top:2px;}
+/* SINKING FUNDS */
+.sf-card{background:var(--sur);border-radius:var(--r);padding:16px;border:1px solid var(--bor);margin-bottom:10px;position:relative;overflow:hidden;}
+.sf-card::before{content:'';position:absolute;top:0;left:0;width:4px;height:100%;background:var(--pur);}
+.sf-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;}
+.sf-name{font-size:14px;font-weight:700;padding-left:6px;}
+.sf-ico{font-size:20px;flex-shrink:0;}
+.sf-bal{font-family:'Playfair Display',serif;font-size:26px;font-weight:900;color:var(--pur);padding-left:6px;line-height:1;}
+.sf-sub{font-size:11px;color:var(--t2);padding-left:6px;margin-top:2px;margin-bottom:10px;}
+.sf-bar-bg{height:6px;background:var(--sur2);border-radius:3px;overflow:hidden;margin-bottom:6px;margin-left:6px;}
+.sf-bar-f{height:100%;border-radius:3px;background:var(--pur);transition:width .6s ease;}
+.sf-meta{display:flex;justify-content:space-between;font-size:11px;color:var(--t2);padding-left:6px;}
+.sf-actions{display:flex;gap:6px;margin-top:11px;padding-left:6px;}
+.sf-btn{flex:1;padding:8px;border-radius:var(--rs);border:1.5px solid var(--bor2);background:none;color:var(--t2);font-family:'Outfit',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;}
+.sf-btn.add{border-color:var(--pur);color:var(--pur);background:rgba(181,122,255,.08);}
+.sf-btn.del{border-color:var(--bor2);color:var(--t3);}
+.sf-summary{background:linear-gradient(135deg,rgba(181,122,255,.1),rgba(181,122,255,.04));border:1px solid rgba(181,122,255,.25);border-radius:var(--r);padding:16px;margin-bottom:14px;}
+.sf-sum-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.sf-sum-item{}
+.sf-sum-lbl{font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--t2);margin-bottom:3px;}
+.sf-sum-val{font-size:20px;font-weight:700;}
 /* EMPTY */
 .empty{text-align:center;padding:44px 20px;color:var(--t2);}
 .ei{font-size:40px;margin-bottom:10px;}
@@ -269,13 +289,34 @@ select.fi{cursor:pointer;}
   </div>
 </div>
 
+<!-- SINKING FUNDS -->
+<div class="scr" id="s-sink">
+  <div class="hdr">
+    <div class="hr">
+      <div><div class="ht">Sinking Funds</div><div class="hs">Building towards big expenses</div></div>
+      <button class="hp" onclick="openSFAdd()">+ Contribute</button>
+    </div>
+  </div>
+  <div class="sa" style="padding:0 16px calc(110px + var(--sb));">
+    <div class="sf-summary">
+      <div class="sf-sum-grid">
+        <div class="sf-sum-item"><div class="sf-sum-lbl">Total Saved</div><div class="sf-sum-val" style="color:var(--pur)" id="sf-total">$0</div></div>
+        <div class="sf-sum-item"><div class="sf-sum-lbl">Monthly Target</div><div class="sf-sum-val" style="color:var(--yel)" id="sf-mtarget">$0</div></div>
+        <div class="sf-sum-item"><div class="sf-sum-lbl">This Month Added</div><div class="sf-sum-val" style="color:var(--grn)" id="sf-mthis">$0</div></div>
+        <div class="sf-sum-item"><div class="sf-sum-lbl">Active Funds</div><div class="sf-sum-val" id="sf-count">0</div></div>
+      </div>
+    </div>
+    <div id="sf-list"></div>
+  </div>
+</div>
+
 <!-- NAV -->
 <nav class="nav">
   <button class="nb on" onclick="go('dash',this)">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>Home
   </button>
   <button class="nb" onclick="go('txns',this)">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><circle cx="3" cy="6" r="1" fill="currentColor"/><circle cx="3" cy="12" r="1" fill="currentColor"/><circle cx="3" cy="18" r="1" fill="currentColor"/></svg>Transactions
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><circle cx="3" cy="6" r="1" fill="currentColor"/><circle cx="3" cy="12" r="1" fill="currentColor"/><circle cx="3" cy="18" r="1" fill="currentColor"/></svg>History
   </button>
   <div style="flex:0 0 auto;display:flex;justify-content:center;padding:0 4px;">
     <div class="nadd" onclick="openAdd()">
@@ -285,8 +326,11 @@ select.fi{cursor:pointer;}
   <button class="nb" onclick="go('budget',this)">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M2 20h20M6 20V10M10 20V4M14 20V14M18 20V8"/></svg>Budget
   </button>
+  <button class="nb" onclick="go('sink',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z"/><path d="M12 6v6l4 2"/></svg>Funds
+  </button>
   <button class="nb" onclick="go('reports',this)">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>Reports
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="9"/><polyline points="12 8 12 12 14 14"/></svg>Reports
   </button>
 </nav>
 
@@ -324,6 +368,32 @@ select.fi{cursor:pointer;}
   </div>
 </div>
 
+<!-- SINKING FUND CONTRIBUTE MODAL -->
+<div class="ov" id="sf-modal" onclick="bgc(event,'sf-modal')">
+  <div class="modal">
+    <div class="mh"></div>
+    <div class="mt" id="sf-modal-title">Add to Fund</div>
+    <div class="fg"><label class="fl">Amount to Add</label><input class="fi big" type="number" id="sf-amt" placeholder="$0.00" inputmode="decimal"></div>
+    <div class="fg"><label class="fl">Date</label><input class="fi" type="date" id="sf-date"></div>
+    <div class="fg"><label class="fl">Notes (optional)</label><input class="fi" type="text" id="sf-notes" placeholder="e.g. From budget savings this month…"></div>
+    <button class="btn" style="background:linear-gradient(135deg,var(--pur),#8855cc)" onclick="saveSFContrib()">Add to Fund</button>
+    <button class="btn ghost" onclick="document.getElementById('sf-modal').classList.remove('open')">Cancel</button>
+  </div>
+</div>
+
+<!-- SINKING FUND SETUP MODAL -->
+<div class="ov" id="sf-setup" onclick="bgc(event,'sf-setup')">
+  <div class="modal">
+    <div class="mh"></div>
+    <div class="mt">Fund Settings</div>
+    <div class="fg"><label class="fl">Fund Name</label><select class="fi" id="sf-fund-sel"></select></div>
+    <div class="fg"><label class="fl">Monthly Target</label><input class="fi big" type="number" id="sf-target" placeholder="$0.00" inputmode="decimal"></div>
+    <div class="fg"><label class="fl">Overall Goal (optional)</label><input class="fi" type="number" id="sf-goal" placeholder="e.g. 5000.00" inputmode="decimal"></div>
+    <button class="btn" style="background:linear-gradient(135deg,var(--pur),#8855cc)" onclick="saveSFSetup()">Save Fund</button>
+    <button class="btn ghost" onclick="document.getElementById('sf-setup').classList.remove('open')">Cancel</button>
+  </div>
+</div>
+
 <div id="toast"></div>
 
 <script>
@@ -334,9 +404,35 @@ const CATS={
 };
 const CLR=['#00d4ff','#06ffa5','#ffd166','#ff6b6b','#b57aff','#ff9f43','#48dbfb','#ff9ff3','#54a0ff','#c8d6e5','#01abc7','#5f27cd'];
 const CICO={'🏠 Housing (Mortgage/Rent)':'🏠','💡 Utilities':'💡','🌐 Internet & Phone':'🌐','🛒 Groceries':'🛒','🍽️ Dining Out':'🍽️','🎬 Entertainment':'🎬','⛽ Gas (Personal)':'⛽','🚗 Gas (Work)':'🚗','✈️ Travel':'✈️','🔧 Vehicle Maintenance':'🔧','🛡️ Insurance':'🛡️','👧 Kids - Activities':'👧','👗 Clothing':'👗','💪 Personal - Gym/Subscriptions/Health':'💪','🐾 Pet Care':'🐾','🏡 Home Maintenance':'🏡','⚡ Other':'⚡','💵 Paycheck':'💵','💳 Freelance':'💳','🏦 Bank Transfer':'🏦','📈 Investment':'📈','🎁 Gift / Bonus':'🎁','🔁 Reimbursement Received':'🔁','💳 Credit Card':'💳','🏦 Personal Loan':'🏦','🏠 Mortgage Debt':'🏠','🚗 Auto Loan':'🚗','👨‍🎓 Student Loan':'👨‍🎓','🏥 Medical Debt':'🏥'};
-let S={txns:[],budgets:[],type:'income',ctx:'personal',filter:'all',editId:null,bm:new Date().getMonth(),by:new Date().getFullYear(),rm:new Date().getMonth(),ry:new Date().getFullYear()};
-function load(){try{const t=localStorage.getItem('ff4t'),b=localStorage.getItem('ff4b');if(t)S.txns=JSON.parse(t);if(b)S.budgets=JSON.parse(b);}catch(e){}}
-function persist(){try{localStorage.setItem('ff4t',JSON.stringify(S.txns));localStorage.setItem('ff4b',JSON.stringify(S.budgets));}catch(e){toast('⚠️ Storage full');}}
+const SF_FUNDS=[
+  {id:'car-maint',name:'Car Maintenance',icon:'🔧'},
+  {id:'new-car',name:'New Car Fund',icon:'🚗'},
+  {id:'vacation',name:'Vacation Fund',icon:'✈️'},
+  {id:'home-maint',name:'Home Maintenance',icon:'🏡'},
+  {id:'pet',name:'Pet Fund',icon:'🐾'},
+  {id:'personal',name:'Personal Fund (Slush)',icon:'💜'},
+  {id:'emergency',name:'Emergency Fund',icon:'🆘'}
+];
+let S={txns:[],budgets:[],sinkFunds:[],sinkContribs:[],type:'income',ctx:'personal',filter:'all',editId:null,sfActiveId:null,bm:new Date().getMonth(),by:new Date().getFullYear(),rm:new Date().getMonth(),ry:new Date().getFullYear()};
+function load(){
+  try{
+    const t=localStorage.getItem('ff4t'),b=localStorage.getItem('ff4b'),sf=localStorage.getItem('ff4sf'),sc=localStorage.getItem('ff4sc');
+    if(t)S.txns=JSON.parse(t);
+    if(b)S.budgets=JSON.parse(b);
+    if(sf)S.sinkFunds=JSON.parse(sf);
+    if(sc)S.sinkContribs=JSON.parse(sc);
+    // Init any missing funds with defaults
+    SF_FUNDS.forEach(f=>{if(!S.sinkFunds.find(s=>s.id===f.id))S.sinkFunds.push({id:f.id,target:0,goal:0});});
+  }catch(e){}
+}
+function persist(){
+  try{
+    localStorage.setItem('ff4t',JSON.stringify(S.txns));
+    localStorage.setItem('ff4b',JSON.stringify(S.budgets));
+    localStorage.setItem('ff4sf',JSON.stringify(S.sinkFunds));
+    localStorage.setItem('ff4sc',JSON.stringify(S.sinkContribs));
+  }catch(e){toast('⚠️ Storage full');}
+}
 const f$=n=>'$'+Math.abs(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
 const fD=d=>new Date(d+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'});
 const mStr=(m,y)=>new Date(y,m,1).toLocaleString('en-US',{month:'long',year:'numeric'});
@@ -351,6 +447,7 @@ function go(id,btn){
   if(id==='dash')rDash();
   if(id==='txns')renderTxns();
   if(id==='budget')rBudget();
+  if(id==='sink')rSink();
   if(id==='reports')rReports();
 }
 function rDash(){
@@ -573,11 +670,110 @@ function xReim(){
   const txt=`REIMBURSABLE EXPENSES — ${mStr(S.rm,S.ry).toUpperCase()}\nTotal: ${f$(tot)}\n\n${rl.map(t=>`${fD(t.date)}  |  ${t.desc}  |  ${f$(t.amount)}${t.notes?'  |  '+t.notes:''}`).join('\n')}\n\nGenerated by FinanceFlow`;
   navigator.clipboard.writeText(txt).then(()=>toast('↩️ Copied!')).catch(()=>{alert(txt);});
 }
+// ── SINKING FUNDS ──
+function rSink(){
+  const now=new Date(),m=now.getMonth(),y=now.getFullYear();
+  const thisMonthContribs=S.sinkContribs.filter(c=>{const d=new Date(c.date+'T12:00:00');return d.getMonth()===m&&d.getFullYear()===y;});
+  const totalSaved=S.sinkContribs.reduce((a,c)=>a+c.amount,0);
+  const monthlyTarget=S.sinkFunds.reduce((a,f)=>a+f.target,0);
+  const thisMonthTotal=thisMonthContribs.reduce((a,c)=>a+c.amount,0);
+  document.getElementById('sf-total').textContent=f$(totalSaved);
+  document.getElementById('sf-mtarget').textContent=f$(monthlyTarget);
+  document.getElementById('sf-mthis').textContent=f$(thisMonthTotal);
+  document.getElementById('sf-count').textContent=SF_FUNDS.length;
+
+  const el=document.getElementById('sf-list');
+  el.innerHTML=SF_FUNDS.map(fd=>{
+    const cfg=S.sinkFunds.find(s=>s.id===fd.id)||{target:0,goal:0};
+    const balance=S.sinkContribs.filter(c=>c.fundId===fd.id).reduce((a,c)=>a+c.amount,0);
+    const mthis=thisMonthContribs.filter(c=>c.fundId===fd.id).reduce((a,c)=>a+c.amount,0);
+    const pct=cfg.goal>0?Math.min((balance/cfg.goal)*100,100):cfg.target>0?Math.min((mthis/cfg.target)*100,100):0;
+    const barColor=pct>=100?'var(--grn)':pct>=50?'var(--pur)':'var(--pur)';
+    const recent=S.sinkContribs.filter(c=>c.fundId===fd.id).sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,3);
+    const recentHTML=recent.length>0?`<div style="margin-top:10px;padding-left:6px;border-top:1px solid var(--bor);padding-top:8px;">${recent.map(c=>`<div style="display:flex;justify-content:space-between;font-size:11px;color:var(--t2);padding:2px 0;"><span>${fD(c.date)}${c.notes?' · '+c.notes:''}</span><span style="color:var(--pur);font-weight:600;">+${f$(c.amount)}</span></div>`).join('')}</div>`:'';
+    return`<div class="sf-card fu">
+      <div class="sf-top">
+        <div>
+          <div class="sf-name">${fd.icon} ${fd.name}</div>
+          <div class="sf-bal">${f$(balance)}</div>
+          <div class="sf-sub">${cfg.target>0?'Monthly target: '+f$(cfg.target):'No monthly target set'}${cfg.goal>0?' · Goal: '+f$(cfg.goal):''}</div>
+        </div>
+        <div style="text-align:right;">
+          ${mthis>0?`<div style="font-size:11px;color:var(--grn);font-weight:600;">+${f$(mthis)} this month</div>`:''}
+          ${cfg.goal>0?`<div style="font-size:11px;color:var(--t2);margin-top:2px;">${Math.round(pct)}% of goal</div>`:''}
+        </div>
+      </div>
+      ${cfg.goal>0||cfg.target>0?`<div class="sf-bar-bg"><div class="sf-bar-f" style="width:${pct}%;background:${barColor};"></div></div><div class="sf-meta"><span>${cfg.goal>0?f$(balance)+' / '+f$(cfg.goal):f$(mthis)+' / '+f$(cfg.target)+' this month'}</span><span>${cfg.goal>0&&balance<cfg.goal?f$(cfg.goal-balance)+' to go':''}</span></div>`:''}
+      ${recentHTML}
+      <div class="sf-actions">
+        <button class="sf-btn add" onclick="openSFContrib('${fd.id}')">+ Add Money</button>
+        <button class="sf-btn" onclick="openSFSetup('${fd.id}')" style="border-color:var(--bor2);color:var(--t2);">⚙️ Settings</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openSFContrib(fundId){
+  S.sfActiveId=fundId;
+  const fd=SF_FUNDS.find(f=>f.id===fundId);
+  document.getElementById('sf-modal-title').textContent='Add to '+fd.name;
+  document.getElementById('sf-amt').value='';
+  document.getElementById('sf-notes').value='';
+  document.getElementById('sf-date').value=todayStr();
+  document.getElementById('sf-modal').classList.add('open');
+}
+
+function openSFAdd(){
+  // Open contribute modal with fund selector
+  const fd=SF_FUNDS[0];
+  openSFContrib(fd.id);
+}
+
+function saveSFContrib(){
+  const amt=parseFloat(document.getElementById('sf-amt').value);
+  if(!amt||amt<=0){toast('⚠️ Enter a valid amount');return;}
+  S.sinkContribs.push({
+    id:Date.now().toString(36)+Math.random().toString(36).slice(2,5),
+    fundId:S.sfActiveId,
+    amount:amt,
+    date:document.getElementById('sf-date').value,
+    notes:document.getElementById('sf-notes').value.trim()
+  });
+  persist();
+  document.getElementById('sf-modal').classList.remove('open');
+  rSink();
+  const fd=SF_FUNDS.find(f=>f.id===S.sfActiveId);
+  toast('✅ Added to '+fd.name+'!');
+}
+
+function openSFSetup(fundId){
+  S.sfActiveId=fundId;
+  const fd=SF_FUNDS.find(f=>f.id===fundId);
+  const cfg=S.sinkFunds.find(s=>s.id===fundId)||{target:0,goal:0};
+  document.getElementById('sf-fund-sel').innerHTML=SF_FUNDS.map(f=>`<option value="${f.id}"${f.id===fundId?' selected':''}>${f.icon} ${f.name}</option>`).join('');
+  document.getElementById('sf-target').value=cfg.target||'';
+  document.getElementById('sf-goal').value=cfg.goal||'';
+  document.getElementById('sf-setup').classList.add('open');
+}
+
+function saveSFSetup(){
+  const fundId=document.getElementById('sf-fund-sel').value;
+  const target=parseFloat(document.getElementById('sf-target').value)||0;
+  const goal=parseFloat(document.getElementById('sf-goal').value)||0;
+  const idx=S.sinkFunds.findIndex(s=>s.id===fundId);
+  if(idx>-1)S.sinkFunds[idx]={...S.sinkFunds[idx],target,goal};
+  else S.sinkFunds.push({id:fundId,target,goal});
+  persist();
+  document.getElementById('sf-setup').classList.remove('open');
+  rSink();
+  toast('✅ Fund settings saved!');
+}
+
 load();
 document.getElementById('idate').value=todayStr();
 stype('income',document.querySelector('.ttab.ai'));
 rDash();
-window.addEventListener('load',()=>{rReports();rBudget();});
+window.addEventListener('load',()=>{rReports();rBudget();rSink();});
 window.addEventListener('resize',()=>{if(document.getElementById('s-reports').classList.contains('on'))rReports();});
 </script>
 </body>
